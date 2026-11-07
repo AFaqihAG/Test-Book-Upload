@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Katalog buku olimpiade matematika. Temukan dan buka buku PDF yang tersedia.">
+  <meta name="theme-color" content="#101b2b">
+  <title>Kumpulan Buku Olimpiade</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d1725; --panel: #142337; --panel-soft: #192b42;
+      --text: #edf3f8; --muted: #a9b8c9; --accent: #83b8ad;
+      --line: rgba(210, 226, 239, .13);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh;
+      background: radial-gradient(ellipse at 12% 0%, rgba(57,105,111,.20), transparent 38rem), var(--bg);
+      color: var(--text);
+      font: 16px/1.65 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .wrap { width: min(1080px, calc(100% - 40px)); margin: 0 auto; }
+    header { padding: 58px 0 42px; border-bottom: 1px solid var(--line); }
+    .eyebrow { margin: 0 0 12px; color: var(--accent); font-size: .76rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.4rem); line-height: 1.1; letter-spacing: -.04em; }
+    .intro { max-width: 650px; margin: 18px 0 0; color: var(--muted); font-size: 1.04rem; }
+    main { padding: 42px 0 70px; }
+    .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    h2 { margin: 0; font-size: 1.2rem; letter-spacing: -.02em; }
+    .count, .hint { color: var(--muted); font-size: .88rem; }
+    .books { display: grid; grid-template-columns: repeat(auto-fill, minmax(265px, 1fr)); gap: 18px; }
+    .book {
+      display: flex; flex-direction: column; min-height: 260px; padding: 22px;
+      border: 1px solid var(--line); border-radius: 16px;
+      background: linear-gradient(145deg, var(--panel), #101e30);
+      transition: transform .18s ease, border-color .18s ease;
+    }
+    .book:hover { transform: translateY(-3px); border-color: rgba(131,184,173,.48); }
+    .book-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .pdf-icon { display: grid; place-items: center; width: 42px; height: 48px; border: 1px solid rgba(131,184,173,.35); border-radius: 8px; color: var(--accent); background: rgba(131,184,173,.08); font-size: .72rem; font-weight: 800; }
+    .tag { color: #a9d2c7; font-size: .76rem; font-weight: 650; }
+    h3 { overflow-wrap: anywhere; margin: 20px 0 7px; font-size: 1.18rem; line-height: 1.35; }
+    .filename { margin: 0; color: var(--muted); font-size: .82rem; overflow-wrap: anywhere; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; padding-top: 22px; }
+    .button {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 40px;
+      padding: 8px 14px; border-radius: 8px; text-decoration: none; font-size: .88rem; font-weight: 700;
+      border: 1px solid rgba(131,184,173,.4); color: #c8e5dc; background: rgba(131,184,173,.10);
+    }
+    .button.primary { color: #0d1b23; background: var(--accent); border-color: var(--accent); }
+    .status { padding: 22px; border: 1px dashed var(--line); border-radius: 14px; color: var(--muted); }
+    .status.error { color: #efb7ae; border-color: rgba(239,183,174,.35); }
+    footer { padding: 22px 0 34px; border-top: 1px solid var(--line); color: #8294a8; font-size: .82rem; }
+    @media (max-width: 680px) {
+      .wrap { width: min(100% - 28px, 540px); }
+      header { padding: 42px 0 30px; } main { padding-top: 30px; }
+      .section-heading { align-items: start; flex-direction: column; gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <p class="eyebrow">Katalog buku</p>
+      <h1>Kumpulan Buku Olimpiade</h1>
+      <p class="intro">Kumpulan materi untuk membangun pemahaman matematika dan mengembangkan kemampuan problem solving secara bertahap.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="section-heading">
+      <h2>Daftar buku</h2>
+      <span class="count" id="book-count">Memuat daftar…</span>
+    </div>
+    <p class="hint">Daftar ini dibuat otomatis dari semua file PDF di folder <code>book/</code>.</p>
+    <section class="books" id="books" aria-live="polite">
+      <div class="status">Sedang mencari file PDF…</div>
+    </section>
+  </main>
+
+  <footer><div class="wrap">Kumpulan Buku Olimpiade <span aria-hidden="true">·</span> Katalog digital</div></footer>
+
+  <script>
+    /*
+      Untuk repository GitHub Pages publik:
+      - owner dan repo akan dicoba dideteksi dari alamat website.
+      - Jika memakai custom domain, isi GITHUB_OWNER dan GITHUB_REPO secara manual.
+    */
+    const GITHUB_OWNER = "AFaqihAG";
+    const GITHUB_REPO = "Test-Book-Upload";
+    const BRANCH = "main";
+    const FOLDER = "book";
+
+    function detectRepository() {
+      if (GITHUB_OWNER && GITHUB_REPO) return { owner: GITHUB_OWNER, repo: GITHUB_REPO };
+
+      const host = location.hostname;
+      const parts = location.pathname.split("/").filter(Boolean);
+
+      // Bentuk standar: username.github.io atau username.github.io/nama-repo/
+      if (host.endsWith(".github.io")) {
+        const owner = host.slice(0, -".github.io".length);
+        const repo = parts.length ? parts[0] : `${owner}.github.io`;
+        return { owner, repo };
+      }
+
+      return null;
+    }
+
+    function displayName(filename) {
+      return filename
+        .replace(/\.pdf$/i, "")
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function makeBookCard(file, basePath) {
+      const card = document.createElement("article");
+      card.className = "book";
+
+      const top = document.createElement("div");
+      top.className = "book-top";
+      const icon = document.createElement("div");
+      icon.className = "pdf-icon";
+      icon.textContent = "PDF";
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = "Buku digital";
+      top.append(icon, tag);
+
+      const title = document.createElement("h3");
+      title.textContent = displayName(file.name);
+
+      const filename = document.createElement("p");
+      filename.className = "filename";
+      filename.textContent = file.name;
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      // File tersedia melalui GitHub Pages pada path /book/nama-file.pdf.
+      const pdfUrl = `${basePath}${FOLDER}/${encodeURIComponent(file.name)}`;
+
+      const open = document.createElement("a");
+      open.className = "button primary";
+      open.href = pdfUrl;
+      open.target = "_blank";
+      open.rel = "noopener";
+      open.textContent = "Buka buku";
+
+      const download = document.createElement("a");
+      download.className = "button";
+      download.href = pdfUrl;
+      download.download = file.name;
+      download.textContent = "Unduh PDF";
+
+      actions.append(open, download);
+      card.append(top, title, filename, actions);
+      return card;
+    }
+
+    async function loadBooks() {
+      const container = document.getElementById("books");
+      const count = document.getElementById("book-count");
+      const repository = detectRepository();
+
+      if (!repository) {
+        count.textContent = "Konfigurasi diperlukan";
+        container.innerHTML = "";
+        const message = document.createElement("div");
+        message.className = "status error";
+        message.textContent = "Repository tidak dapat dideteksi. Jika situs memakai custom domain, isi GITHUB_OWNER dan GITHUB_REPO di bagian script index.html.";
+        container.appendChild(message);
+        return;
+      }
+
+      const apiUrl = `https://api.github.com/repos/${encodeURIComponent(repository.owner)}/${encodeURIComponent(repository.repo)}/contents/${FOLDER}?ref=${encodeURIComponent(BRANCH)}`;
+
+      try {
+        const response = await fetch(apiUrl, {
+          headers: { "Accept": "application/vnd.github+json" }
+        });
+
+        if (!response.ok) {
+          if (response.status === 404) throw new Error("Folder book/ tidak ditemukan, repository belum publik, atau nama branch bukan main.");
+          if (response.status === 403) throw new Error("Batas permintaan GitHub API tercapai. Coba muat ulang beberapa saat lagi.");
+          throw new Error(`GitHub API mengembalikan status ${response.status}.`);
+        }
+
+        const entries = await response.json();
+        const pdfs = entries
+          .filter(item => item.type === "file" && /\.pdf$/i.test(item.name))
+          .sort((a, b) => a.name.localeCompare(b.name, "id", { numeric: true }));
+
+        container.innerHTML = "";
+        count.textContent = `${pdfs.length} buku ditemukan`;
+
+        if (pdfs.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "status";
+          empty.textContent = "Belum ada file PDF di folder book/. Tambahkan PDF ke folder tersebut lalu muat ulang halaman.";
+          container.appendChild(empty);
+          return;
+        }
+
+        // Path dasar situs: / untuk user site, /nama-repo/ untuk project site.
+        const basePath = location.pathname.endsWith("/")
+          ? location.pathname
+          : location.pathname.slice(0, location.pathname.lastIndexOf("/") + 1);
+
+        pdfs.forEach(file => container.appendChild(makeBookCard(file, basePath)));
+      } catch (error) {
+        count.textContent = "Gagal memuat";
+        container.innerHTML = "";
+        const message = document.createElement("div");
+        message.className = "status error";
+        message.textContent = `${error.message} Pastikan repository publik dan folder book/ berada di branch ${BRANCH}.`;
+        container.appendChild(message);
+      }
+    }
+
+    loadBooks();
+  </script>
+</body>
+</html>

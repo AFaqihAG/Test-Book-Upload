@@ -1,0 +1,16 @@
+# Berkas sementara LaTeX
+*.aux
+*.log
+*.toc
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+*.lof
+*.lot
+
+# Hasil kompilasi (dibuat otomatis oleh GitHub Actions)
+src/*.pdf
+_site/
